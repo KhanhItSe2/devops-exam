@@ -73,17 +73,17 @@ resource "aws_security_group" "dev_sg" {
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    from_port   = 22
-    to_port     = 22
+    from_port   = 8888
+    to_port     = 8888
     protocol    = "tcp"
     cidr_blocks = [var.allowed_ip]
   }
 
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 15672
+    to_port     = 15672
+    protocol    = "tcp"
+    cidr_blocks = [var.allowed_ip]
   }
 
   tags = {

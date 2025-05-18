@@ -1,0 +1,120 @@
+services:
+  postgres:
+    image: postgres:14-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_DB: coffeeshop
+      POSTGRES_USER: adminopswat
+      POSTGRES_PASSWORD: adminpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - coffeeshop
+
+  rabbitmq:
+    image: rabbitmq:3.11-management-alpine
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - coffeeshop
+
+  web:
+    image: cuongopswat/go-coffeeshop-web
+    container_name: web
+    ports:
+      - "8888:8888"
+    environment:
+      APP_NAME: coffeeshop-web
+      REVERSE_PROXY_URL: http://proxy:5000
+    networks:
+      - coffeeshop
+    depends_on:
+      - proxy
+
+  proxy:
+    image: cuongopswat/go-coffeeshop-proxy
+    container_name: proxy
+    ports:
+      - "5000:5000"
+    networks:
+      - coffeeshop
+
+  product:
+    image: cuongopswat/go-coffeeshop-product
+    container_name: product
+    environment:
+      APP_NAME: product-service
+      IN_DOCKER: "true"
+      PG_URL: postgres://adminopswat:adminpass@postgres:5432/coffeeshop?sslmode=disable
+      PG_DSN_URL: host=postgres user=adminopswat password=adminpass dbname=coffeeshop sslmode=disable
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+    ports:
+      - "5001:5001"
+    networks:
+      - coffeeshop
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  barista:
+    image: cuongopswat/go-coffeeshop-barista
+    container_name: barista
+    environment:
+      APP_NAME: barista-service
+      IN_DOCKER: "true"
+      PG_URL: postgres://adminopswat:adminpass@postgres:5432/coffeeshop?sslmode=disable
+      PG_DSN_URL: host=postgres user=adminopswat password=adminpass dbname=coffeeshop sslmode=disable
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+    networks:
+      - coffeeshop
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  kitchen:
+    image: cuongopswat/go-coffeeshop-kitchen
+    container_name: kitchen
+    environment:
+      APP_NAME: kitchen-service
+      IN_DOCKER: "true"
+      PG_URL: postgres://adminopswat:adminpass@postgres:5432/coffeeshop?sslmode=disable
+      PG_DSN_URL: host=postgres user=adminopswat password=adminpass dbname=coffeeshop sslmode=disable
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+    networks:
+      - coffeeshop
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  counter:
+    image: cuongopswat/go-coffeeshop-counter
+    container_name: counter
+    environment:
+      APP_NAME: counter-service
+      IN_DOCKER: "true"
+      PG_URL: postgres://adminopswat:adminpass@postgres:5432/coffeeshop?sslmode=disable
+      PG_DSN_URL: host=postgres user=adminopswat password=adminpass dbname=coffeeshop sslmode=disable
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      PRODUCT_CLIENT_URL: http://product:5001
+    ports:
+      - "5002:5002"
+    networks:
+      - coffeeshop
+    depends_on:
+      - postgres
+      - rabbitmq
+      - product
+
+volumes:
+  postgres_data:
+
+networks:
+  coffeeshop:
+    driver: bridge
