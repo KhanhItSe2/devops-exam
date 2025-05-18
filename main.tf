@@ -131,7 +131,6 @@ resource "aws_instance" "go_coffeeshop_ec2" {
 
               # Sample docker-compose.yml
               cat << 'DOCKER_COMPOSE' > docker-compose.yml
-              version: '3.8'
 
               services:
                 app:
