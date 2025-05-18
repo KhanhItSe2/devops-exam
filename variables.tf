@@ -15,7 +15,7 @@ variable "availability_zone" {
 }
 
 variable "instance_type" {
-  default = "t2.micro"
+  default = "t3.micro"
 }
 
 variable "allowed_ip" {
@@ -27,3 +27,4 @@ variable "key_name" {
   description = "DevOps exam key pair name"
   type        = string
 }
+
