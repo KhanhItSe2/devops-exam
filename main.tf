@@ -101,32 +101,28 @@ resource "aws_instance" "go_coffeeshop_ec2" {
   subnet_id                   = aws_subnet.public.id
   vpc_security_group_ids      = [aws_security_group.dev_sg.id]
   associate_public_ip_address = true
-  
+
   # User data script for Docker installation
   user_data = <<-EOF
               #!/bin/bash
-              # Update and install prerequisites
-              apt update -y
-              apt install -y ca-certificates curl gnupg
+               # Install docker
+              sudo apt-get update
+              sudo apt-get install -y cloud-utils apt-transport-https ca-certificates curl software-properties-common
+              sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+              add-apt-repository \
+                "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+                $(lsb_release -cs) \
+                stable"
+              sudo apt-get update
+              sudo apt-get install -y docker-ce
+              usermod -aG docker ubuntu
 
-              # Add Docker's official GPG key
-              install -m 0755 -d /etc/apt/keyrings
-              curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-              chmod a+r /etc/apt/keyrings/docker.gpg
-
-              # Add Docker's stable repository
-              echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list
-
-              # Install Docker Engine
-              apt update -y
-              apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-              # Start Docker and enable it on boot
-              systemctl start docker
-              systemctl enable docker
+              # Install docker-compose
+              curl -L https://github.com/docker/compose/releases/download/1.21.0/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+              sudo chmod +x /usr/local/bin/docker-compose    
 
               # Create directory for Docker Compose
-              mkdir -p /home/ubuntu/dev-environment
+              sudo mkdir -p /home/ubuntu/dev-environment
               cd /home/ubuntu/dev-environment
 
               # Sample docker-compose.yml
@@ -142,6 +138,7 @@ resource "aws_instance" "go_coffeeshop_ec2" {
                     interval: 30s
                     timeout: 10s
                     retries: 5
+
                 postgres:
                   image: postgres:14-alpine
                   container_name: postgres
@@ -250,8 +247,8 @@ resource "aws_instance" "go_coffeeshop_ec2" {
               DOCKER_COMPOSE
 
               # Start Docker Compose
-              docker-compose up -d
-              EOF
+              sudo docker-compose up -d
+EOF
   tags = {
     Name = "go-coffeeshop-vpc"
   }
